@@ -36,9 +36,9 @@ export type UIScreen = {
 export type UIFlow = {
   id: string;
   fromScreenId: string;
+  fromElementId?: string;
   toScreenId: string;
   trigger: string;
-  triggerElementId?: string;
   description: string;
   condition: string;
 };

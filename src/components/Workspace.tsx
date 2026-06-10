@@ -107,6 +107,9 @@ export function Workspace({
                 }}
               >
                 <span>{element.label || element.name}</span>
+                {flows.some((flow) => flow.fromScreenId === screen.id && flow.fromElementId === element.id) ? (
+                  <span className="flow-indicator" aria-label="Has outgoing flow" title="Has outgoing flow" />
+                ) : null}
               </button>
             ))}
           </div>

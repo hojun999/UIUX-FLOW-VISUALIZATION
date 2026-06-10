@@ -221,7 +221,7 @@ function App() {
             }
           : screen,
       ),
-      flows: currentProject.flows.filter((flow) => flow.triggerElementId !== selectedElement.id),
+      flows: currentProject.flows.filter((flow) => flow.fromElementId !== selectedElement.id),
     }));
     setSelectedElementId(null);
   }
@@ -251,7 +251,37 @@ function App() {
     setSelectedElementId(null);
   }
 
-  function updateSelectedFlow(patch: Partial<Pick<UIFlow, 'trigger' | 'description' | 'condition'>>) {
+  function createElementFlow(toScreenId: string) {
+    if (!selectedScreen || !selectedElement || selectedScreen.id === toScreenId) {
+      return;
+    }
+
+    const toScreen = project.screens.find((screen) => screen.id === toScreenId);
+
+    if (!toScreen) {
+      return;
+    }
+
+    const flow: UIFlow = {
+      id: createFlowId(),
+      fromScreenId: selectedScreen.id,
+      fromElementId: selectedElement.id,
+      toScreenId,
+      trigger: `${selectedElement.name} selected`,
+      description: `${selectedElement.name} opens ${toScreen.name}.`,
+      condition: '',
+    };
+
+    setProject((currentProject) => ({
+      ...currentProject,
+      flows: [...currentProject.flows, flow],
+    }));
+    setSelectedFlowId(flow.id);
+  }
+
+  function updateSelectedFlow(
+    patch: Partial<Pick<UIFlow, 'fromScreenId' | 'fromElementId' | 'toScreenId' | 'trigger' | 'description' | 'condition'>>,
+  ) {
     if (!selectedFlow) {
       return;
     }
@@ -304,13 +334,19 @@ function App() {
         selectedFlow={selectedFlow}
         selectedElement={selectedElement}
         screen={selectedScreen}
+        screens={project.screens}
+        flows={project.flows}
+        onCreateElementFlow={createElementFlow}
         onDeleteScreen={deleteSelectedScreen}
         onDeleteElement={deleteSelectedElement}
         onDeleteFlow={deleteSelectedFlow}
         onSetEditorMode={(mode) => {
           setEditorMode(mode);
-          setSelectedElementId(null);
-          setSelectedFlowId(null);
+          if (mode === 'flow') {
+            setSelectedElementId(null);
+          } else {
+            setSelectedFlowId(null);
+          }
         }}
         onUpdateElement={updateSelectedElement}
         onUpdateFlow={updateSelectedFlow}

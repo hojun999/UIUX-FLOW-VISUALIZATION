@@ -5,15 +5,20 @@ const screenTypes: UIScreenType[] = ['mainMenu', 'hud', 'pauseMenu', 'inventory'
 type RightInspectorProps = {
   canDeleteScreen: boolean;
   editorMode: 'layout' | 'flow';
+  flows: UIFlow[];
   selectedFlow: UIFlow | undefined;
   selectedElement: UIElement | undefined;
   screen: UIScreen | undefined;
+  screens: UIScreen[];
+  onCreateElementFlow: (toScreenId: string) => void;
   onDeleteScreen: () => void;
   onDeleteElement: () => void;
   onDeleteFlow: () => void;
   onSetEditorMode: (mode: 'layout' | 'flow') => void;
   onUpdateElement: (patch: Partial<Omit<UIElement, 'id' | 'type'>>) => void;
-  onUpdateFlow: (patch: Partial<Pick<UIFlow, 'trigger' | 'description' | 'condition'>>) => void;
+  onUpdateFlow: (
+    patch: Partial<Pick<UIFlow, 'fromScreenId' | 'fromElementId' | 'toScreenId' | 'trigger' | 'description' | 'condition'>>,
+  ) => void;
   onUpdateScreenName: (name: string) => void;
   onUpdateScreenType: (type: UIScreenType) => void;
 };
@@ -21,9 +26,12 @@ type RightInspectorProps = {
 export function RightInspector({
   canDeleteScreen,
   editorMode,
+  flows,
   selectedFlow,
   selectedElement,
   screen,
+  screens,
+  onCreateElementFlow,
   onDeleteScreen,
   onDeleteElement,
   onDeleteFlow,
@@ -33,6 +41,10 @@ export function RightInspector({
   onUpdateScreenName,
   onUpdateScreenType,
 }: RightInspectorProps) {
+  const flowSourceScreen = selectedFlow
+    ? screens.find((candidateScreen) => candidateScreen.id === selectedFlow.fromScreenId)
+    : undefined;
+
   return (
     <aside className="right-inspector">
       <section className="inspector-panel">
@@ -124,6 +136,52 @@ export function RightInspector({
               <dd>{selectedFlow.toScreenId}</dd>
             </div>
           </dl>
+
+          <label className="field-label" htmlFor="flow-trigger">
+            From Screen
+            <select
+              id="flow-from-screen"
+              value={selectedFlow.fromScreenId}
+              onChange={(event) => onUpdateFlow({ fromScreenId: event.target.value, fromElementId: undefined })}
+            >
+              {screens.map((candidateScreen) => (
+                <option key={candidateScreen.id} value={candidateScreen.id}>
+                  {candidateScreen.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="field-label" htmlFor="flow-from-element">
+            From Element
+            <select
+              id="flow-from-element"
+              value={selectedFlow.fromElementId ?? ''}
+              onChange={(event) => onUpdateFlow({ fromElementId: event.target.value || undefined })}
+            >
+              <option value="">Screen-level flow</option>
+              {flowSourceScreen?.elements.map((element) => (
+                <option key={element.id} value={element.id}>
+                  {element.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="field-label" htmlFor="flow-to-screen">
+            To Screen
+            <select
+              id="flow-to-screen"
+              value={selectedFlow.toScreenId}
+              onChange={(event) => onUpdateFlow({ toScreenId: event.target.value })}
+            >
+              {screens.map((candidateScreen) => (
+                <option key={candidateScreen.id} value={candidateScreen.id}>
+                  {candidateScreen.name}
+                </option>
+              ))}
+            </select>
+          </label>
 
           <label className="field-label" htmlFor="flow-trigger">
             Trigger
@@ -245,6 +303,35 @@ export function RightInspector({
           <button className="delete-screen-button" type="button" onClick={onDeleteElement}>
             Delete Element
           </button>
+
+          <label className="field-label" htmlFor="element-flow-target">
+            Create Flow To
+            <select
+              id="element-flow-target"
+              defaultValue=""
+              onChange={(event) => {
+                if (event.target.value) {
+                  onCreateElementFlow(event.target.value);
+                  event.currentTarget.value = '';
+                }
+              }}
+            >
+              <option value="" disabled>
+                Select target screen
+              </option>
+              {screens
+                .filter((candidateScreen) => candidateScreen.id !== screen?.id)
+                .map((candidateScreen) => (
+                  <option key={candidateScreen.id} value={candidateScreen.id}>
+                    {candidateScreen.name}
+                  </option>
+                ))}
+            </select>
+          </label>
+
+          {flows.some((flow) => flow.fromScreenId === screen?.id && flow.fromElementId === selectedElement.id) ? (
+            <p className="hint-text">This element has outgoing flows.</p>
+          ) : null}
         </div>
       ) : editorMode === 'layout' ? (
         <p className="empty-state">Select an element on the canvas to edit it.</p>

@@ -296,6 +296,18 @@ h2 {
   z-index: 2;
 }
 
+.flow-indicator {
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  width: 9px;
+  height: 9px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 0 1px rgb(15 23 42 / 22%);
+}
+
 .ui-element span {
   overflow-wrap: anywhere;
 }

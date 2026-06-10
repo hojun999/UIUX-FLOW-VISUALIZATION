@@ -26,6 +26,17 @@ function getScreenPosition(index: number) {
   };
 }
 
+function getSourceElementName(flow: UIFlow, screens: UIScreen[]): string | null {
+  if (!flow.fromElementId) {
+    return null;
+  }
+
+  const sourceScreen = screens.find((screen) => screen.id === flow.fromScreenId);
+  const sourceElement = sourceScreen?.elements.find((element) => element.id === flow.fromElementId);
+
+  return sourceElement?.name ?? null;
+}
+
 export function FlowEditor({
   flows,
   screens,
@@ -54,7 +65,7 @@ export function FlowEditor({
     id: flow.id,
     source: flow.fromScreenId,
     target: flow.toScreenId,
-    label: flow.trigger || flow.description || 'Flow',
+    label: getSourceElementName(flow, screens) ?? flow.trigger ?? flow.description ?? 'Flow',
     selected: flow.id === selectedFlowId,
   }));
 
