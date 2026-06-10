@@ -1,12 +1,22 @@
 import type { UIScreen } from '../types';
 
+const canvasSize = {
+  width: 800,
+  height: 480,
+};
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
 type WorkspaceProps = {
   screen: UIScreen | undefined;
   selectedElementId: string | null;
+  onMoveElement: (elementId: string, x: number, y: number) => void;
   onSelectElement: (elementId: string) => void;
 };
 
-export function Workspace({ screen, selectedElementId, onSelectElement }: WorkspaceProps) {
+export function Workspace({ screen, selectedElementId, onMoveElement, onSelectElement }: WorkspaceProps) {
   return (
     <main className="workspace">
       <section className="workspace-header">
@@ -30,7 +40,37 @@ export function Workspace({ screen, selectedElementId, onSelectElement }: Worksp
                 width: element.width,
                 height: element.height,
               }}
-              onClick={() => onSelectElement(element.id)}
+              onPointerDown={(event) => {
+                const canvas = event.currentTarget.parentElement;
+
+                if (!canvas) {
+                  return;
+                }
+
+                event.preventDefault();
+                onSelectElement(element.id);
+
+                const canvasRect = canvas.getBoundingClientRect();
+                const pointerOffsetX = event.clientX - canvasRect.left - element.x;
+                const pointerOffsetY = event.clientY - canvasRect.top - element.y;
+                const maxX = canvasSize.width - element.width;
+                const maxY = canvasSize.height - element.height;
+
+                function handlePointerMove(moveEvent: PointerEvent) {
+                  const nextX = clamp(moveEvent.clientX - canvasRect.left - pointerOffsetX, 0, maxX);
+                  const nextY = clamp(moveEvent.clientY - canvasRect.top - pointerOffsetY, 0, maxY);
+
+                  onMoveElement(element.id, Math.round(nextX), Math.round(nextY));
+                }
+
+                function handlePointerUp() {
+                  window.removeEventListener('pointermove', handlePointerMove);
+                  window.removeEventListener('pointerup', handlePointerUp);
+                }
+
+                window.addEventListener('pointermove', handlePointerMove);
+                window.addEventListener('pointerup', handlePointerUp, { once: true });
+              }}
             >
               <span>{element.label || element.name}</span>
             </button>

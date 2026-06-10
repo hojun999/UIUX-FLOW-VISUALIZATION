@@ -171,6 +171,26 @@ function App() {
     }));
   }
 
+  function moveElement(elementId: string, x: number, y: number) {
+    if (!selectedScreen) {
+      return;
+    }
+
+    setProject((currentProject) => ({
+      ...currentProject,
+      screens: currentProject.screens.map((screen) =>
+        screen.id === selectedScreen.id
+          ? {
+              ...screen,
+              elements: screen.elements.map((element) =>
+                element.id === elementId ? { ...element, x, y } : element,
+              ),
+            }
+          : screen,
+      ),
+    }));
+  }
+
   function deleteSelectedElement() {
     if (!selectedScreen || !selectedElement) {
       return;
@@ -204,6 +224,7 @@ function App() {
       <Workspace
         screen={selectedScreen}
         selectedElementId={selectedElementId}
+        onMoveElement={moveElement}
         onSelectElement={setSelectedElementId}
       />
       <RightInspector
