@@ -12,14 +12,19 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 type WorkspaceProps = {
-  editorMode: 'layout' | 'flow';
+  editorMode: 'layout' | 'flow' | 'preview';
   flows: UIFlow[];
+  previewCanGoBack: boolean;
+  previewScreen: UIScreen | undefined;
   screen: UIScreen | undefined;
   screens: UIScreen[];
   selectedFlowId: string | null;
   selectedElementId: string | null;
   selectedScreenId: string;
   onCreateFlow: (fromScreenId: string, toScreenId: string) => void;
+  onNavigatePreview: (elementId: string) => void;
+  onPreviewBack: () => void;
+  onPreviewReset: () => void;
   onMoveElement: (elementId: string, x: number, y: number) => void;
   onSelectFlow: (flowId: string | null) => void;
   onSelectElement: (elementId: string) => void;
@@ -29,12 +34,17 @@ type WorkspaceProps = {
 export function Workspace({
   editorMode,
   flows,
+  previewCanGoBack,
+  previewScreen,
   screen,
   screens,
   selectedFlowId,
   selectedElementId,
   selectedScreenId,
   onCreateFlow,
+  onNavigatePreview,
+  onPreviewBack,
+  onPreviewReset,
   onMoveElement,
   onSelectFlow,
   onSelectElement,
@@ -47,10 +57,56 @@ export function Workspace({
           <p className="eyebrow">Selected Screen</p>
           <h2>{screen?.name ?? 'No screen selected'}</h2>
         </div>
-        {screen ? <span className="screen-type">{screen.type}</span> : null}
+        {editorMode === 'preview' && previewScreen ? (
+          <span className="screen-type">{previewScreen.type}</span>
+        ) : screen ? (
+          <span className="screen-type">{screen.type}</span>
+        ) : null}
       </section>
 
-      {editorMode === 'flow' ? (
+      {editorMode === 'preview' ? (
+        <section className="preview-shell">
+          <header className="preview-header">
+            <strong>{previewScreen?.name ?? 'No preview screen'}</strong>
+            <div>
+              <button type="button" disabled={!previewCanGoBack} onClick={onPreviewBack}>
+                Back
+              </button>
+              <button type="button" onClick={onPreviewReset}>
+                Reset
+              </button>
+            </div>
+          </header>
+          <div className="canvas preview-canvas">
+            {previewScreen?.elements.map((element) => {
+              const clickFlow = flows.find(
+                (flow) =>
+                  flow.fromScreenId === previewScreen.id &&
+                  flow.fromElementId === element.id &&
+                  flow.trigger.trim().toLowerCase() === 'click',
+              );
+
+              return (
+                <button
+                  className={`ui-element preview-element ${element.type} ${clickFlow ? 'clickable' : ''}`}
+                  disabled={!clickFlow}
+                  key={element.id}
+                  type="button"
+                  style={{
+                    left: element.x,
+                    top: element.y,
+                    width: element.width,
+                    height: element.height,
+                  }}
+                  onClick={() => onNavigatePreview(element.id)}
+                >
+                  <span>{element.label || element.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ) : editorMode === 'flow' ? (
         <FlowEditor
           flows={flows}
           screens={screens}

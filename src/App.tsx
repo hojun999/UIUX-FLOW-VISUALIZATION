@@ -72,10 +72,12 @@ function createNewElement(type: UIElementType, elementNumber: number): UIElement
 
 function App() {
   const [project, setProject] = useState<GameUIProject>(sampleProject);
-  const [editorMode, setEditorMode] = useState<'layout' | 'flow'>('layout');
+  const [editorMode, setEditorMode] = useState<'layout' | 'flow' | 'preview'>('layout');
   const [selectedScreenId, setSelectedScreenId] = useState(project.screens[0]?.id ?? '');
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [selectedFlowId, setSelectedFlowId] = useState<string | null>(null);
+  const [previewScreenId, setPreviewScreenId] = useState(project.screens[0]?.id ?? '');
+  const [previewHistory, setPreviewHistory] = useState<string[]>([]);
 
   const selectedScreen = useMemo(
     () => project.screens.find((screen) => screen.id === selectedScreenId),
@@ -90,6 +92,11 @@ function App() {
   const selectedFlow = useMemo(
     () => project.flows.find((flow) => flow.id === selectedFlowId),
     [project.flows, selectedFlowId],
+  );
+
+  const previewScreen = useMemo(
+    () => project.screens.find((screen) => screen.id === previewScreenId) ?? project.screens[0],
+    [previewScreenId, project.screens],
   );
 
   function selectScreen(screenId: string) {
@@ -145,6 +152,10 @@ function App() {
       ),
     }));
     setSelectedScreenId(fallbackScreen.id);
+    setPreviewScreenId((currentPreviewScreenId) =>
+      currentPreviewScreenId === selectedScreenId ? fallbackScreen.id : currentPreviewScreenId,
+    );
+    setPreviewHistory((currentHistory) => currentHistory.filter((screenId) => screenId !== selectedScreenId));
     setSelectedElementId(null);
     setSelectedFlowId(null);
   }
@@ -267,7 +278,7 @@ function App() {
       fromScreenId: selectedScreen.id,
       fromElementId: selectedElement.id,
       toScreenId,
-      trigger: `${selectedElement.name} selected`,
+      trigger: 'click',
       description: `${selectedElement.name} opens ${toScreen.name}.`,
       condition: '',
     };
@@ -304,6 +315,44 @@ function App() {
     setSelectedFlowId(null);
   }
 
+  function navigatePreview(elementId: string) {
+    if (!previewScreen) {
+      return;
+    }
+
+    const flow = project.flows.find(
+      (candidateFlow) =>
+        candidateFlow.fromScreenId === previewScreen.id &&
+        candidateFlow.fromElementId === elementId &&
+        candidateFlow.trigger.trim().toLowerCase() === 'click',
+    );
+
+    if (!flow || !project.screens.some((screen) => screen.id === flow.toScreenId)) {
+      return;
+    }
+
+    setPreviewHistory((currentHistory) => [...currentHistory, previewScreen.id]);
+    setPreviewScreenId(flow.toScreenId);
+  }
+
+  function goBackInPreview() {
+    setPreviewHistory((currentHistory) => {
+      const previousScreenId = currentHistory[currentHistory.length - 1];
+
+      if (!previousScreenId) {
+        return currentHistory;
+      }
+
+      setPreviewScreenId(previousScreenId);
+      return currentHistory.slice(0, -1);
+    });
+  }
+
+  function resetPreview() {
+    setPreviewScreenId(project.screens[0]?.id ?? '');
+    setPreviewHistory([]);
+  }
+
   return (
     <main className="app-shell">
       <TopBar project={project} />
@@ -317,12 +366,17 @@ function App() {
       <Workspace
         editorMode={editorMode}
         flows={project.flows}
+        previewCanGoBack={previewHistory.length > 0}
+        previewScreen={previewScreen}
         screen={selectedScreen}
         screens={project.screens}
         selectedFlowId={selectedFlowId}
         selectedElementId={selectedElementId}
         selectedScreenId={selectedScreenId}
         onCreateFlow={createFlow}
+        onNavigatePreview={navigatePreview}
+        onPreviewBack={goBackInPreview}
+        onPreviewReset={resetPreview}
         onMoveElement={moveElement}
         onSelectFlow={setSelectedFlowId}
         onSelectElement={setSelectedElementId}
@@ -342,7 +396,12 @@ function App() {
         onDeleteFlow={deleteSelectedFlow}
         onSetEditorMode={(mode) => {
           setEditorMode(mode);
-          if (mode === 'flow') {
+          if (mode === 'preview') {
+            setPreviewScreenId(selectedScreenId || project.screens[0]?.id || '');
+            setPreviewHistory([]);
+            setSelectedElementId(null);
+            setSelectedFlowId(null);
+          } else if (mode === 'flow') {
             setSelectedElementId(null);
           } else {
             setSelectedFlowId(null);

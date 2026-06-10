@@ -4,7 +4,7 @@ const screenTypes: UIScreenType[] = ['mainMenu', 'hud', 'pauseMenu', 'inventory'
 
 type RightInspectorProps = {
   canDeleteScreen: boolean;
-  editorMode: 'layout' | 'flow';
+  editorMode: 'layout' | 'flow' | 'preview';
   flows: UIFlow[];
   selectedFlow: UIFlow | undefined;
   selectedElement: UIElement | undefined;
@@ -14,7 +14,7 @@ type RightInspectorProps = {
   onDeleteScreen: () => void;
   onDeleteElement: () => void;
   onDeleteFlow: () => void;
-  onSetEditorMode: (mode: 'layout' | 'flow') => void;
+  onSetEditorMode: (mode: 'layout' | 'flow' | 'preview') => void;
   onUpdateElement: (patch: Partial<Omit<UIElement, 'id' | 'type'>>) => void;
   onUpdateFlow: (
     patch: Partial<Pick<UIFlow, 'fromScreenId' | 'fromElementId' | 'toScreenId' | 'trigger' | 'description' | 'condition'>>,
@@ -64,11 +64,18 @@ export function RightInspector({
           >
             Flow
           </button>
+          <button
+            className={editorMode === 'preview' ? 'active' : ''}
+            type="button"
+            onClick={() => onSetEditorMode('preview')}
+          >
+            Preview
+          </button>
         </div>
       </section>
 
       <h2>Inspector</h2>
-      {screen ? (
+      {editorMode !== 'preview' && screen ? (
         <div className="inspector-panel">
           <label className="field-label" htmlFor="screen-name">
             Screen Name
@@ -115,9 +122,13 @@ export function RightInspector({
           </button>
           {!canDeleteScreen ? <p className="hint-text">At least one screen is required.</p> : null}
         </div>
-      ) : (
+      ) : editorMode !== 'preview' ? (
         <p className="empty-state">Select a screen to inspect it.</p>
-      )}
+      ) : null}
+
+      {editorMode === 'preview' ? (
+        <p className="empty-state">Preview follows element flows where trigger is set to click.</p>
+      ) : null}
 
       {editorMode === 'flow' && selectedFlow ? (
         <div className="inspector-panel">
