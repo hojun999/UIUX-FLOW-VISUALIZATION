@@ -10,10 +10,13 @@ type RightInspectorProps = {
   selectedElement: UIElement | undefined;
   screen: UIScreen | undefined;
   screens: UIScreen[];
+  importError: string | null;
   onCreateElementFlow: (toScreenId: string) => void;
   onDeleteScreen: () => void;
   onDeleteElement: () => void;
   onDeleteFlow: () => void;
+  onExportJson: () => void;
+  onImportJson: (file: File) => void;
   onResetSampleProject: () => void;
   onSetEditorMode: (mode: 'layout' | 'flow' | 'preview') => void;
   onUpdateElement: (patch: Partial<Omit<UIElement, 'id' | 'type'>>) => void;
@@ -32,10 +35,13 @@ export function RightInspector({
   selectedElement,
   screen,
   screens,
+  importError,
   onCreateElementFlow,
   onDeleteScreen,
   onDeleteElement,
   onDeleteFlow,
+  onExportJson,
+  onImportJson,
   onResetSampleProject,
   onSetEditorMode,
   onUpdateElement,
@@ -77,6 +83,27 @@ export function RightInspector({
         <button className="reset-sample-button" type="button" onClick={onResetSampleProject}>
           Reset Sample Project
         </button>
+        <div className="json-actions">
+          <button type="button" onClick={onExportJson}>
+            Export JSON
+          </button>
+          <label>
+            Import JSON
+            <input
+              accept="application/json,.json"
+              type="file"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+
+                if (file) {
+                  onImportJson(file);
+                  event.currentTarget.value = '';
+                }
+              }}
+            />
+          </label>
+        </div>
+        {importError ? <p className="error-message">{importError}</p> : null}
       </section>
 
       <h2>Inspector</h2>

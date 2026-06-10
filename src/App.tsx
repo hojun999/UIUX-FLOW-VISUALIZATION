@@ -4,7 +4,7 @@ import { RightInspector } from './components/RightInspector';
 import { TopBar } from './components/TopBar';
 import { Workspace } from './components/Workspace';
 import { sampleProject } from './data/sampleProject';
-import { clearSavedProject, loadProject, saveProject } from './storage';
+import { clearSavedProject, isValidProject, loadProject, saveProject } from './storage';
 import type { GameUIProject, UIElement, UIElementType, UIFlow, UIScreen, UIScreenType } from './types';
 
 const elementLabels: Record<UIElementType, string> = {
@@ -79,6 +79,7 @@ function App() {
   const [selectedFlowId, setSelectedFlowId] = useState<string | null>(null);
   const [previewScreenId, setPreviewScreenId] = useState(project.screens[0]?.id ?? '');
   const [previewHistory, setPreviewHistory] = useState<string[]>([]);
+  const [importError, setImportError] = useState<string | null>(null);
 
   const selectedScreen = useMemo(
     () => project.screens.find((screen) => screen.id === selectedScreenId),
@@ -360,12 +361,52 @@ function App() {
 
   function resetSampleProject() {
     clearSavedProject();
+    setImportError(null);
     setProject(sampleProject);
     setSelectedScreenId(sampleProject.screens[0]?.id ?? '');
     setSelectedElementId(null);
     setSelectedFlowId(null);
     setPreviewScreenId(sampleProject.screens[0]?.id ?? '');
     setPreviewHistory([]);
+  }
+
+  function replaceProject(nextProject: GameUIProject) {
+    setProject(nextProject);
+    setSelectedScreenId(nextProject.screens[0]?.id ?? '');
+    setSelectedElementId(null);
+    setSelectedFlowId(null);
+    setPreviewScreenId(nextProject.screens[0]?.id ?? '');
+    setPreviewHistory([]);
+  }
+
+  function exportJson() {
+    const projectJson = JSON.stringify(project, null, 2);
+    const blob = new Blob([projectJson], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const safeName = project.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'game-ui-project';
+
+    link.href = url;
+    link.download = `${safeName}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importJson(file: File) {
+    try {
+      const fileText = await file.text();
+      const parsedProject = JSON.parse(fileText);
+
+      if (!isValidProject(parsedProject)) {
+        setImportError('Import failed: JSON must include id, name, screens array, and flows array.');
+        return;
+      }
+
+      replaceProject(parsedProject);
+      setImportError(null);
+    } catch {
+      setImportError('Import failed: selected file is not valid JSON.');
+    }
   }
 
   return (
@@ -409,7 +450,10 @@ function App() {
         onDeleteScreen={deleteSelectedScreen}
         onDeleteElement={deleteSelectedElement}
         onDeleteFlow={deleteSelectedFlow}
+        onExportJson={exportJson}
+        onImportJson={importJson}
         onResetSampleProject={resetSampleProject}
+        importError={importError}
         onSetEditorMode={(mode) => {
           setEditorMode(mode);
           if (mode === 'preview') {

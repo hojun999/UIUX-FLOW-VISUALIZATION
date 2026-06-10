@@ -6,7 +6,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function isValidProject(value: unknown): value is GameUIProject {
+export function isValidProject(value: unknown): value is GameUIProject {
   if (!isRecord(value)) {
     return false;
   }
@@ -14,9 +14,7 @@ function isValidProject(value: unknown): value is GameUIProject {
   return (
     typeof value.id === 'string' &&
     typeof value.name === 'string' &&
-    typeof value.engine === 'string' &&
     Array.isArray(value.screens) &&
-    value.screens.length > 0 &&
     Array.isArray(value.flows)
   );
 }
