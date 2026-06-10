@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { LeftSidebar } from './components/LeftSidebar';
 import { RightInspector } from './components/RightInspector';
 import { TopBar } from './components/TopBar';
 import { Workspace } from './components/Workspace';
 import { sampleProject } from './data/sampleProject';
+import { clearSavedProject, loadProject, saveProject } from './storage';
 import type { GameUIProject, UIElement, UIElementType, UIFlow, UIScreen, UIScreenType } from './types';
 
 const elementLabels: Record<UIElementType, string> = {
@@ -71,7 +72,7 @@ function createNewElement(type: UIElementType, elementNumber: number): UIElement
 }
 
 function App() {
-  const [project, setProject] = useState<GameUIProject>(sampleProject);
+  const [project, setProject] = useState<GameUIProject>(() => loadProject() ?? sampleProject);
   const [editorMode, setEditorMode] = useState<'layout' | 'flow' | 'preview'>('layout');
   const [selectedScreenId, setSelectedScreenId] = useState(project.screens[0]?.id ?? '');
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
@@ -98,6 +99,10 @@ function App() {
     () => project.screens.find((screen) => screen.id === previewScreenId) ?? project.screens[0],
     [previewScreenId, project.screens],
   );
+
+  useEffect(() => {
+    saveProject(project);
+  }, [project]);
 
   function selectScreen(screenId: string) {
     setSelectedScreenId(screenId);
@@ -353,6 +358,16 @@ function App() {
     setPreviewHistory([]);
   }
 
+  function resetSampleProject() {
+    clearSavedProject();
+    setProject(sampleProject);
+    setSelectedScreenId(sampleProject.screens[0]?.id ?? '');
+    setSelectedElementId(null);
+    setSelectedFlowId(null);
+    setPreviewScreenId(sampleProject.screens[0]?.id ?? '');
+    setPreviewHistory([]);
+  }
+
   return (
     <main className="app-shell">
       <TopBar project={project} />
@@ -394,6 +409,7 @@ function App() {
         onDeleteScreen={deleteSelectedScreen}
         onDeleteElement={deleteSelectedElement}
         onDeleteFlow={deleteSelectedFlow}
+        onResetSampleProject={resetSampleProject}
         onSetEditorMode={(mode) => {
           setEditorMode(mode);
           if (mode === 'preview') {

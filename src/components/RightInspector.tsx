@@ -14,6 +14,7 @@ type RightInspectorProps = {
   onDeleteScreen: () => void;
   onDeleteElement: () => void;
   onDeleteFlow: () => void;
+  onResetSampleProject: () => void;
   onSetEditorMode: (mode: 'layout' | 'flow' | 'preview') => void;
   onUpdateElement: (patch: Partial<Omit<UIElement, 'id' | 'type'>>) => void;
   onUpdateFlow: (
@@ -35,6 +36,7 @@ export function RightInspector({
   onDeleteScreen,
   onDeleteElement,
   onDeleteFlow,
+  onResetSampleProject,
   onSetEditorMode,
   onUpdateElement,
   onUpdateFlow,
@@ -72,6 +74,9 @@ export function RightInspector({
             Preview
           </button>
         </div>
+        <button className="reset-sample-button" type="button" onClick={onResetSampleProject}>
+          Reset Sample Project
+        </button>
       </section>
 
       <h2>Inspector</h2>

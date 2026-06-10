@@ -446,6 +446,21 @@ h2 {
   color: #ffffff;
 }
 
+.reset-sample-button {
+  min-height: 36px;
+  border: 1px solid #c8d1df;
+  border-radius: 6px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #17202a;
+  font-weight: 800;
+}
+
+.reset-sample-button:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
 input,
 select,
 textarea {
