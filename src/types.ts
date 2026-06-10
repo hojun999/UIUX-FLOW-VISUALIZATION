@@ -1,16 +1,13 @@
-export type UIElementType =
-  | 'button'
-  | 'text'
-  | 'panel'
-  | 'slider'
-  | 'inventorySlot'
-  | 'minimap'
-  | 'healthBar';
+export type EngineType = 'unity' | 'unreal' | 'godot' | 'custom';
+
+export type UIScreenType = 'mainMenu' | 'hud' | 'pauseMenu' | 'inventory' | 'settings' | 'modal';
+
+export type UIElementType = 'button' | 'text' | 'panel' | 'image' | 'slider' | 'healthBar' | 'minimap';
 
 export type UIElement = {
   id: string;
   type: UIElementType;
-  label: string;
+  name: string;
   x: number;
   y: number;
   width: number;
@@ -20,19 +17,22 @@ export type UIElement = {
 export type UIScreen = {
   id: string;
   name: string;
+  type: UIScreenType;
   elements: UIElement[];
 };
 
-export type FlowConnection = {
+export type UIFlow = {
   id: string;
   fromScreenId: string;
-  fromElementId?: string;
   toScreenId: string;
-  label: string;
+  triggerElementId?: string;
+  description: string;
 };
 
-export type FlowProject = {
+export type GameUIProject = {
+  id: string;
   name: string;
+  engine: EngineType;
   screens: UIScreen[];
-  flows: FlowConnection[];
+  flows: UIFlow[];
 };
