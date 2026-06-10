@@ -17,7 +17,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -96,6 +97,11 @@ h2 {
   background: #f8fafc;
 }
 
+.left-sidebar section {
+  display: grid;
+  gap: 14px;
+}
+
 .left-sidebar {
   border-right: 1px solid #d7dde7;
 }
@@ -104,7 +110,8 @@ h2 {
   border-left: 1px solid #d7dde7;
 }
 
-.screen-list {
+.screen-list,
+.element-palette {
   display: grid;
   gap: 8px;
 }
@@ -157,6 +164,27 @@ h2 {
   font-size: 12px;
   font-weight: 600;
   text-transform: capitalize;
+}
+
+.element-palette {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.element-palette button {
+  min-height: 36px;
+  border: 1px solid #d7dde7;
+  border-radius: 6px;
+  padding: 0 8px;
+  background: #ffffff;
+  color: #17202a;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.element-palette button:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
 }
 
 .workspace {
@@ -229,6 +257,12 @@ h2 {
   font-weight: 700;
 }
 
+.ui-element.selected {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgb(59 130 246 / 24%);
+  z-index: 2;
+}
+
 .ui-element span {
   overflow-wrap: anywhere;
 }
@@ -253,6 +287,15 @@ h2 {
 
 .ui-element.slider {
   background: linear-gradient(90deg, #38bdf8 0 55%, #e5e7eb 55%);
+}
+
+.ui-element.toggle {
+  background: linear-gradient(90deg, #22c55e 0 45%, #e5e7eb 45%);
+}
+
+.ui-element.inventorySlot {
+  background: #334155;
+  color: #ffffff;
 }
 
 .ui-element.minimap {
@@ -283,18 +326,30 @@ h2 {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
-  min-height: 38px;
   border: 1px solid #c8d1df;
   border-radius: 6px;
-  padding: 0 10px;
   background: #ffffff;
   color: #17202a;
 }
 
+input,
+select {
+  min-height: 38px;
+  padding: 0 10px;
+}
+
+textarea {
+  min-height: 82px;
+  padding: 9px 10px;
+  resize: vertical;
+}
+
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   border-color: #3b82f6;
   outline: 3px solid rgb(59 130 246 / 18%);
 }
@@ -327,6 +382,12 @@ select:focus {
   overflow-wrap: anywhere;
   color: #17202a;
   font-size: 14px;
+}
+
+.property-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .delete-screen-button {

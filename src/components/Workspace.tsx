@@ -2,9 +2,11 @@ import type { UIScreen } from '../types';
 
 type WorkspaceProps = {
   screen: UIScreen | undefined;
+  selectedElementId: string | null;
+  onSelectElement: (elementId: string) => void;
 };
 
-export function Workspace({ screen }: WorkspaceProps) {
+export function Workspace({ screen, selectedElementId, onSelectElement }: WorkspaceProps) {
   return (
     <main className="workspace">
       <section className="workspace-header">
@@ -18,18 +20,20 @@ export function Workspace({ screen }: WorkspaceProps) {
       <section className="canvas-shell">
         <div className="canvas">
           {screen?.elements.map((element) => (
-            <div
-              className={`ui-element ${element.type}`}
+            <button
+              className={`ui-element ${element.type} ${selectedElementId === element.id ? 'selected' : ''}`}
               key={element.id}
+              type="button"
               style={{
                 left: element.x,
                 top: element.y,
                 width: element.width,
                 height: element.height,
               }}
+              onClick={() => onSelectElement(element.id)}
             >
-              <span>{element.name}</span>
-            </div>
+              <span>{element.label || element.name}</span>
+            </button>
           ))}
         </div>
       </section>

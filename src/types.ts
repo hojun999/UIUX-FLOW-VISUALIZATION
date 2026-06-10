@@ -2,16 +2,28 @@ export type EngineType = 'unity' | 'unreal' | 'godot' | 'custom';
 
 export type UIScreenType = 'mainMenu' | 'hud' | 'pauseMenu' | 'inventory' | 'settings' | 'modal';
 
-export type UIElementType = 'button' | 'text' | 'panel' | 'image' | 'slider' | 'healthBar' | 'minimap';
+export type UIElementType =
+  | 'button'
+  | 'text'
+  | 'panel'
+  | 'image'
+  | 'slider'
+  | 'toggle'
+  | 'inventorySlot'
+  | 'healthBar'
+  | 'minimap'
+  | 'custom';
 
 export type UIElement = {
   id: string;
   type: UIElementType;
   name: string;
+  label: string;
   x: number;
   y: number;
   width: number;
   height: number;
+  description: string;
 };
 
 export type UIScreen = {

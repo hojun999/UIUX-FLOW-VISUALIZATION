@@ -4,7 +4,33 @@ import { RightInspector } from './components/RightInspector';
 import { TopBar } from './components/TopBar';
 import { Workspace } from './components/Workspace';
 import { sampleProject } from './data/sampleProject';
-import type { GameUIProject, UIScreen, UIScreenType } from './types';
+import type { GameUIProject, UIElement, UIElementType, UIScreen, UIScreenType } from './types';
+
+const elementLabels: Record<UIElementType, string> = {
+  button: 'Button',
+  text: 'Text',
+  panel: 'Panel',
+  image: 'Image',
+  slider: 'Slider',
+  toggle: 'Toggle',
+  inventorySlot: 'Inventory Slot',
+  healthBar: 'Health Bar',
+  minimap: 'Minimap',
+  custom: 'Custom',
+};
+
+const elementDefaults: Record<UIElementType, Pick<UIElement, 'width' | 'height'>> = {
+  button: { width: 140, height: 44 },
+  text: { width: 180, height: 36 },
+  panel: { width: 240, height: 140 },
+  image: { width: 120, height: 120 },
+  slider: { width: 220, height: 36 },
+  toggle: { width: 110, height: 36 },
+  inventorySlot: { width: 64, height: 64 },
+  healthBar: { width: 180, height: 28 },
+  minimap: { width: 120, height: 120 },
+  custom: { width: 140, height: 80 },
+};
 
 function createScreenId(): string {
   return `screen-${crypto.randomUUID()}`;
@@ -19,14 +45,46 @@ function createNewScreen(screenNumber: number): UIScreen {
   };
 }
 
+function createElementId(): string {
+  return `element-${crypto.randomUUID()}`;
+}
+
+function createNewElement(type: UIElementType, elementNumber: number): UIElement {
+  const label = elementLabels[type];
+  const defaults = elementDefaults[type];
+
+  return {
+    id: createElementId(),
+    type,
+    name: `${label} ${elementNumber}`,
+    label,
+    x: 80 + ((elementNumber - 1) % 4) * 28,
+    y: 80 + ((elementNumber - 1) % 4) * 28,
+    width: defaults.width,
+    height: defaults.height,
+    description: '',
+  };
+}
+
 function App() {
   const [project, setProject] = useState<GameUIProject>(sampleProject);
   const [selectedScreenId, setSelectedScreenId] = useState(project.screens[0]?.id ?? '');
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
 
   const selectedScreen = useMemo(
     () => project.screens.find((screen) => screen.id === selectedScreenId),
     [project.screens, selectedScreenId],
   );
+
+  const selectedElement = useMemo(
+    () => selectedScreen?.elements.find((element) => element.id === selectedElementId),
+    [selectedElementId, selectedScreen],
+  );
+
+  function selectScreen(screenId: string) {
+    setSelectedScreenId(screenId);
+    setSelectedElementId(null);
+  }
 
   function addScreen() {
     const screen = createNewScreen(project.screens.length + 1);
@@ -36,6 +94,7 @@ function App() {
       screens: [...currentProject.screens, screen],
     }));
     setSelectedScreenId(screen.id);
+    setSelectedElementId(null);
   }
 
   function updateSelectedScreenName(name: string) {
@@ -73,6 +132,63 @@ function App() {
       ),
     }));
     setSelectedScreenId(fallbackScreen.id);
+    setSelectedElementId(null);
+  }
+
+  function addElement(type: UIElementType) {
+    if (!selectedScreen) {
+      return;
+    }
+
+    const element = createNewElement(type, selectedScreen.elements.length + 1);
+
+    setProject((currentProject) => ({
+      ...currentProject,
+      screens: currentProject.screens.map((screen) =>
+        screen.id === selectedScreen.id ? { ...screen, elements: [...screen.elements, element] } : screen,
+      ),
+    }));
+    setSelectedElementId(element.id);
+  }
+
+  function updateSelectedElement(patch: Partial<Omit<UIElement, 'id' | 'type'>>) {
+    if (!selectedScreen || !selectedElement) {
+      return;
+    }
+
+    setProject((currentProject) => ({
+      ...currentProject,
+      screens: currentProject.screens.map((screen) =>
+        screen.id === selectedScreen.id
+          ? {
+              ...screen,
+              elements: screen.elements.map((element) =>
+                element.id === selectedElement.id ? { ...element, ...patch } : element,
+              ),
+            }
+          : screen,
+      ),
+    }));
+  }
+
+  function deleteSelectedElement() {
+    if (!selectedScreen || !selectedElement) {
+      return;
+    }
+
+    setProject((currentProject) => ({
+      ...currentProject,
+      screens: currentProject.screens.map((screen) =>
+        screen.id === selectedScreen.id
+          ? {
+              ...screen,
+              elements: screen.elements.filter((element) => element.id !== selectedElement.id),
+            }
+          : screen,
+      ),
+      flows: currentProject.flows.filter((flow) => flow.triggerElementId !== selectedElement.id),
+    }));
+    setSelectedElementId(null);
   }
 
   return (
@@ -81,14 +197,22 @@ function App() {
       <LeftSidebar
         screens={project.screens}
         selectedScreenId={selectedScreenId}
-        onSelectScreen={setSelectedScreenId}
+        onAddElement={addElement}
+        onSelectScreen={selectScreen}
         onAddScreen={addScreen}
       />
-      <Workspace screen={selectedScreen} />
+      <Workspace
+        screen={selectedScreen}
+        selectedElementId={selectedElementId}
+        onSelectElement={setSelectedElementId}
+      />
       <RightInspector
         canDeleteScreen={project.screens.length > 1}
+        selectedElement={selectedElement}
         screen={selectedScreen}
         onDeleteScreen={deleteSelectedScreen}
+        onDeleteElement={deleteSelectedElement}
+        onUpdateElement={updateSelectedElement}
         onUpdateScreenName={updateSelectedScreenName}
         onUpdateScreenType={updateSelectedScreenType}
       />
