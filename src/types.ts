@@ -37,8 +37,10 @@ export type UIFlow = {
   id: string;
   fromScreenId: string;
   toScreenId: string;
+  trigger: string;
   triggerElementId?: string;
   description: string;
+  condition: string;
 };
 
 export type GameUIProject = {

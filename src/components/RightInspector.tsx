@@ -1,30 +1,60 @@
-import type { UIElement, UIScreen, UIScreenType } from '../types';
+import type { UIElement, UIFlow, UIScreen, UIScreenType } from '../types';
 
 const screenTypes: UIScreenType[] = ['mainMenu', 'hud', 'pauseMenu', 'inventory', 'settings', 'modal'];
 
 type RightInspectorProps = {
   canDeleteScreen: boolean;
+  editorMode: 'layout' | 'flow';
+  selectedFlow: UIFlow | undefined;
   selectedElement: UIElement | undefined;
   screen: UIScreen | undefined;
   onDeleteScreen: () => void;
   onDeleteElement: () => void;
+  onDeleteFlow: () => void;
+  onSetEditorMode: (mode: 'layout' | 'flow') => void;
   onUpdateElement: (patch: Partial<Omit<UIElement, 'id' | 'type'>>) => void;
+  onUpdateFlow: (patch: Partial<Pick<UIFlow, 'trigger' | 'description' | 'condition'>>) => void;
   onUpdateScreenName: (name: string) => void;
   onUpdateScreenType: (type: UIScreenType) => void;
 };
 
 export function RightInspector({
   canDeleteScreen,
+  editorMode,
+  selectedFlow,
   selectedElement,
   screen,
   onDeleteScreen,
   onDeleteElement,
+  onDeleteFlow,
+  onSetEditorMode,
   onUpdateElement,
+  onUpdateFlow,
   onUpdateScreenName,
   onUpdateScreenType,
 }: RightInspectorProps) {
   return (
     <aside className="right-inspector">
+      <section className="inspector-panel">
+        <h2>Editor Mode</h2>
+        <div className="mode-switcher" role="group" aria-label="Editor mode">
+          <button
+            className={editorMode === 'layout' ? 'active' : ''}
+            type="button"
+            onClick={() => onSetEditorMode('layout')}
+          >
+            Layout
+          </button>
+          <button
+            className={editorMode === 'flow' ? 'active' : ''}
+            type="button"
+            onClick={() => onSetEditorMode('flow')}
+          >
+            Flow
+          </button>
+        </div>
+      </section>
+
       <h2>Inspector</h2>
       {screen ? (
         <div className="inspector-panel">
@@ -77,7 +107,62 @@ export function RightInspector({
         <p className="empty-state">Select a screen to inspect it.</p>
       )}
 
-      {selectedElement ? (
+      {editorMode === 'flow' && selectedFlow ? (
+        <div className="inspector-panel">
+          <h2>Flow</h2>
+          <dl className="screen-details">
+            <div>
+              <dt>Flow ID</dt>
+              <dd>{selectedFlow.id}</dd>
+            </div>
+            <div>
+              <dt>From</dt>
+              <dd>{selectedFlow.fromScreenId}</dd>
+            </div>
+            <div>
+              <dt>To</dt>
+              <dd>{selectedFlow.toScreenId}</dd>
+            </div>
+          </dl>
+
+          <label className="field-label" htmlFor="flow-trigger">
+            Trigger
+            <input
+              id="flow-trigger"
+              value={selectedFlow.trigger}
+              onChange={(event) => onUpdateFlow({ trigger: event.target.value })}
+            />
+          </label>
+
+          <label className="field-label" htmlFor="flow-description">
+            Description
+            <textarea
+              id="flow-description"
+              value={selectedFlow.description}
+              onChange={(event) => onUpdateFlow({ description: event.target.value })}
+            />
+          </label>
+
+          <label className="field-label" htmlFor="flow-condition">
+            Condition
+            <textarea
+              id="flow-condition"
+              value={selectedFlow.condition}
+              onChange={(event) => onUpdateFlow({ condition: event.target.value })}
+            />
+          </label>
+
+          <button className="delete-screen-button" type="button" onClick={onDeleteFlow}>
+            Delete Flow
+          </button>
+        </div>
+      ) : null}
+
+      {editorMode === 'flow' && !selectedFlow ? (
+        <p className="empty-state">Select a flow edge to edit it.</p>
+      ) : null}
+
+      {editorMode === 'layout' && selectedElement ? (
         <div className="inspector-panel">
           <h2>Element</h2>
           <dl className="screen-details">
@@ -161,9 +246,9 @@ export function RightInspector({
             Delete Element
           </button>
         </div>
-      ) : (
+      ) : editorMode === 'layout' ? (
         <p className="empty-state">Select an element on the canvas to edit it.</p>
-      )}
+      ) : null}
     </aside>
   );
 }
